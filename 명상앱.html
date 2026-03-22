@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+  <meta name="apple-mobile-web-app-title" content="명상">
+  <title>명상</title>
+  <style>
+    /* =============================================
+       기본 리셋 & 풀스크린 설정
+    ============================================= */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    }
+
+    /* =============================================
+       앱 전체 컨테이너
+       배경색이 여기서 전환됨
+    ============================================= */
+    #app {
+      width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      transition: background-color 1.5s ease;
+      background-color: #0e0e10;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 배경 원형 장식 (분위기용) */
+    #app::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      transition: background 1.5s ease;
+    }
+
+    /* =============================================
+       온보딩 카드
+    ============================================= */
+    .card {
+      width: min(88vw, 360px);
+      background: rgba(255,255,255,0.07);
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 28px;
+      padding: 36px 28px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .step { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .step.active { display: flex; }
+
+    .title {
+      font-size: 22px; font-weight: 400;
+      color: rgba(255,255,255,0.92);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 28px;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    /* =============================================
+       색상 미리보기 원
+    ============================================= */
+    .preview-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      margin-bottom: 24px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      transition: background-color 0.3s ease;
+    }
+
+    /* =============================================
+       색상 선택 팔레트 그리드
+    ============================================= */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .color-btn {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-btn:active { transform: scale(0.92); }
+    .color-btn.selected {
+      border-color: rgba(255,255,255,0.85);
+      transform: scale(1.12);
+    }
+
+    /* =============================================
+       버튼
+    ============================================= */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 50px;
+      border: 0.5px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.9);
+      font-size: 16px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 6px;
+    }
+    .btn:active { background: rgba(255,255,255,0.2); }
+    .btn.primary { background: rgba(255,255,255,0.18); font-weight: 500; }
+    .btn.ghost { background: transparent; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); font-size: 14px; }
+
+    /* =============================================
+       확인 단계 색상 3개 미리보기
+    ============================================= */
+    .confirm-row {
+      display: flex; justify-content: space-around;
+      width: 100%; margin-bottom: 28px;
+    }
+    .confirm-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .confirm-circle {
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.2);
+    }
+    .confirm-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+    /* =============================================
+       명상 세션 화면 (풀스크린, 탭하면 종료)
+    ============================================= */
+    #session {
+      display: none;
+      position: absolute; inset: 0;
+      align-items: flex-end; justify-content: center;
+      padding-bottom: 48px;
+      cursor: pointer;
+    }
+    #session.active { display: flex; }
+
+    #session-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.5px;
+    }
+
+    /* =============================================
+       홈화면 추가 안내 배너 (iOS Safari에서만 표시)
+    ============================================= */
+    #install-banner {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(20,20,22,0.95);
+      border-top: 0.5px solid rgba(255,255,255,0.1);
+      padding: 16px 20px 32px;
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+      display: none;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    #install-banner span { color: rgba(255,255,255,0.9); }
+    #install-close {
+      position: absolute; top: 12px; right: 16px;
+      font-size: 20px; color: rgba(255,255,255,0.3);
+      cursor: pointer; background: none; border: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- =============================================
+       온보딩 카드 영역
+  ============================================= -->
+  <div class="card" id="card">
+
+    <!-- STEP 1: 환영 -->
+    <div class="step active" id="step-1">
+      <div class="title">오신 걸<br>언제나 환영합니다</div>
+      <div class="subtitle">색상을 설정하고<br>호흡에 집중해보세요</div>
+      <button class="btn primary" onclick="goStep(2)">시작하기</button>
+    </div>
+
+    <!-- STEP 2: 들이쉬기 색상 -->
+    <div class="step" id="step-2">
+      <div class="title">숨을 들이쉴 때<br>어떤 색이 좋으세요?</div>
+      <div class="preview-circle" id="inhale-preview"></div>
+      <div class="color-grid" id="inhale-grid"></div>
+      <button class="btn primary" onclick="goStep(3)">다음</button>
+    </div>
+
+    <!-- STEP 3: 내쉬기 색상 -->
+    <div class="step" id="step-3">
+      <div class="title">숨을 내쉴 때<br>어떤 색이 좋으세요?</div>
+      <div class="preview-circle" id="exhale-preview"></div>
+      <div class="color-grid" id="exhale-grid"></div>
+      <button class="btn primary" onclick="goStep(4)">다음</button>
+    </div>
+
+    <!-- STEP 4: 멈추기 색상 -->
+    <div class="step" id="step-4">
+      <div class="title">잠시 멈출 때<br>어떤 색이 좋으세요?</div>
+      <div class="preview-circle" id="hold-preview"></div>
+      <div class="color-grid" id="hold-grid"></div>
+      <button class="btn primary" onclick="goStep(5)">다음</button>
+    </div>
+
+    <!-- STEP 5: 확인 & 시작 -->
+    <div class="step" id="step-5">
+      <div class="title">준비가 되셨나요?</div>
+      <div class="confirm-row">
+        <div class="confirm-item">
+          <div class="confirm-circle" id="c-inhale"></div>
+          <span class="confirm-label">들이쉬기</span>
+        </div>
+        <div class="confirm-item">
+          <div class="confirm-circle" id="c-hold"></div>
+          <span class="confirm-label">멈추기</span>
+        </div>
+        <div class="confirm-item">
+          <div class="confirm-circle" id="c-exhale"></div>
+          <span class="confirm-label">내쉬기</span>
+        </div>
+      </div>
+      <button class="btn primary" onclick="startSession()">명상 시작</button>
+      <button class="btn ghost" onclick="goStep(2)" style="margin-top:10px;">다시 설정하기</button>
+    </div>
+
+  </div>
+
+  <!-- =============================================
+       명상 세션 화면
+       텍스트 없음 — 색상만으로 호흡 유도
+       탭하면 종료
+  ============================================= -->
+  <div id="session" onclick="stopSession()">
+    <span id="session-hint">탭하면 종료</span>
+  </div>
+
+</div>
+
+<!-- iOS 홈화면 추가 안내 -->
+<div id="install-banner">
+  <button id="install-close" onclick="document.getElementById('install-banner').style.display='none'">×</button>
+  Safari 하단의 <span>공유 버튼 →</span> <span>홈 화면에 추가</span>를 누르면<br>앱처럼 사용할 수 있어요 🌿
+</div>
+
+<script>
+  // =============================================
+  // [수정 포인트 1] 호흡 타이밍 (밀리초, 1000 = 1초)
+  // =============================================
+  const TIMING = {
+    inhale: 5000,  // 들이쉬기 5초
+    hold:   2000,  // 멈추기 2초 (0으로 하면 멈추기 없음)
+    exhale: 5000,  // 내쉬기 5초
+  };
+
+  // =============================================
+  // [수정 포인트 2] 색상 팔레트
+  // 눈이 편한 부드러운 색상들
+  // 추가하거나 바꾸고 싶으면 여기서 수정하세요
+  // =============================================
+  const PALETTE = [
+    '#4A90D9', '#5BA85A', '#7B68EE', '#E8A87C',
+    '#5F9EA0', '#BC8F8F', '#708090', '#9370DB',
+    '#2F4F4F', '#1a1a2e', '#3d405b', '#264653',
+    '#8B7355', '#6B8E8E', '#A0856C', '#4A7C8E',
+    '#7A6E9E', '#5E8B7E', '#8E7060', '#3A6B8E',
+    '#6E8E6B', '#8E6B7A', '#5E7A8E', '#7E8E5E',
+  ];
+
+  // =============================================
+  // [수정 포인트 3] 기본 색상
+  // =============================================
+  const DEFAULT = {
+    inhale: '#4A90D9',
+    hold:   '#7B68EE',
+    exhale: '#1a1a2e',
+  };
+
+  // 사용자 선택 색상 저장
+  let chosen = { ...DEFAULT };
+
+  // 타이머 ID 저장용
+  let timer = null;
+
+  // =============================================
+  // 색상 그리드 렌더링
+  // type: 'inhale' | 'exhale' | 'hold'
+  // =============================================
+  function renderGrid(gridId, previewId, type) {
+    const grid = document.getElementById(gridId);
+    const preview = document.getElementById(previewId);
+    grid.innerHTML = '';
+    preview.style.backgroundColor = chosen[type];
+
+    PALETTE.forEach(color => {
+      const btn = document.createElement('div');
+      btn.className = 'color-btn' + (chosen[type] === color ? ' selected' : '');
+      btn.style.backgroundColor = color;
+      btn.onclick = () => {
+        grid.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        chosen[type] = color;
+        preview.style.backgroundColor = color;
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  // =============================================
+  // 단계 이동
+  // =============================================
+  function goStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+
+    if (n === 2) renderGrid('inhale-grid', 'inhale-preview', 'inhale');
+    if (n === 3) renderGrid('exhale-grid', 'exhale-preview', 'exhale');
+    if (n === 4) renderGrid('hold-grid',   'hold-preview',   'hold');
+    if (n === 5) {
+      document.getElementById('c-inhale').style.backgroundColor = chosen.inhale;
+      document.getElementById('c-exhale').style.backgroundColor = chosen.exhale;
+      document.getElementById('c-hold').style.backgroundColor   = chosen.hold;
+    }
+  }
+
+  // =============================================
+  // 명상 사이클 실행
+  // 들이쉬기 → 멈추기 → 내쉬기 → 반복
+  // =============================================
+  function runCycle() {
+    // 들이쉬기
+    setBg(chosen.inhale);
+    playTone('inhale');
+
+    timer = setTimeout(() => {
+      // 멈추기
+      setBg(chosen.hold);
+      playTone('hold');
+
+      timer = setTimeout(() => {
+        // 내쉬기
+        setBg(chosen.exhale);
+        playTone('exhale');
+
+        timer = setTimeout(runCycle, TIMING.exhale);
+      }, TIMING.hold);
+    }, TIMING.inhale);
+  }
+
+  // 배경색 변경
+  function setBg(color) {
+    document.getElementById('app').style.backgroundColor = color;
+  }
+
+  // =============================================
+  // 세션 시작
+  // =============================================
+  function startSession() {
+    document.getElementById('card').style.display = 'none';
+    document.getElementById('session').classList.add('active');
+    runCycle();
+  }
+
+  // =============================================
+  // 세션 종료 (탭하면 호출)
+  // =============================================
+  function stopSession() {
+    clearTimeout(timer);
+    document.getElementById('session').classList.remove('active');
+    document.getElementById('card').style.display = 'flex';
+    setBg('#0e0e10');
+    goStep(5);
+  }
+
+  // =============================================
+  // [수정 포인트 4] 소리 설정
+  // Web Audio API로 부드러운 사인파 생성
+  // - inhale(들이쉬기): 높은 음
+  // - hold(멈추기): 중간 음
+  // - exhale(내쉬기): 낮은 음
+  // 소리 끄려면 playTone 함수 내용을 비워두세요
+  // =============================================
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function playTone(phase) {
+    const freqMap = { inhale: 432, hold: 320, exhale: 256 };
+    const freq = freqMap[phase] || 432;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+    // 페이드인 → 페이드아웃 (뚝 끊기지 않게)
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.1);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.9);
+  }
+
+  // =============================================
+  // iOS Safari에서 홈화면 추가 안내 배너 표시
+  // =============================================
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    setTimeout(() => {
+      document.getElementById('install-banner').style.display = 'block';
+    }, 3000);
+  }
+
+  // 초기 배경색 세팅
+  document.getElementById('inhale-preview') && (document.getElementById('inhale-preview').style.backgroundColor = chosen.inhale);
+</script>
+</body>
+</html>
