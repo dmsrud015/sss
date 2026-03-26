@@ -24,6 +24,9 @@
       overflow: hidden;
     }
 
+    /* =============================================
+       공통 카드 스타일
+    ============================================= */
     .card {
       width: min(88vw, 360px);
       background: rgba(255,255,255,0.07);
@@ -37,24 +40,55 @@
       overflow-y: auto;
     }
 
-    .step { display: none; width: 100%; flex-direction: column; align-items: center; }
-    .step.active { display: flex; }
+    /* 화면 전환 — display none/flex로 제어 */
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; width: 100%; }
 
     .title {
       font-size: 22px; font-weight: 400;
       color: rgba(255,255,255,0.92);
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 24px;
-      letter-spacing: -0.3px;
+      text-align: center; line-height: 1.6;
+      margin-bottom: 8px; letter-spacing: -0.3px;
     }
 
     .subtitle {
-      font-size: 14px;
-      color: rgba(255,255,255,0.4);
-      text-align: center;
-      line-height: 1.7;
-      margin-bottom: 24px;
+      font-size: 14px; color: rgba(255,255,255,0.4);
+      text-align: center; line-height: 1.7; margin-bottom: 28px;
+    }
+
+    /* =============================================
+       [메인화면] 호흡법 선택 카드들
+       - 각 호흡법을 카드 형태로 나열
+    ============================================= */
+    .method-card {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .method-card:active { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
+
+    /* 호흡법 이름 */
+    .method-name {
+      font-size: 17px; font-weight: 500;
+      color: rgba(255,255,255,0.9);
+    }
+
+    /* 호흡법 숫자 (예: 4 - 7 - 8) */
+    .method-numbers {
+      font-size: 13px; color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+    }
+
+    /* 호흡법 설명 */
+    .method-desc {
+      font-size: 12px; color: rgba(255,255,255,0.3);
+      line-height: 1.5; margin-top: 2px;
     }
 
     /* =============================================
@@ -63,8 +97,7 @@
     .photo-upload { width: 100%; margin-bottom: 20px; }
 
     .photo-box {
-      width: 100%; height: 160px;
-      border-radius: 16px;
+      width: 100%; height: 160px; border-radius: 16px;
       border: 1.5px dashed rgba(255,255,255,0.2);
       display: flex; align-items: center; justify-content: center;
       flex-direction: column; gap: 10px;
@@ -72,15 +105,12 @@
       margin-bottom: 10px; transition: border-color 0.2s;
     }
     .photo-box:active { border-color: rgba(255,255,255,0.5); }
-
     .photo-box img {
       width: 100%; height: 100%; object-fit: cover;
       position: absolute; inset: 0; border-radius: 14px;
     }
-
     .photo-icon { font-size: 32px; color: rgba(255,255,255,0.2); }
     .photo-text { font-size: 13px; color: rgba(255,255,255,0.3); }
-
     .photo-overlay {
       display: none; position: absolute; inset: 0;
       background: rgba(0,0,0,0.5);
@@ -88,16 +118,11 @@
       font-size: 13px; color: white; border-radius: 14px;
     }
     .photo-box:active .photo-overlay { display: flex; }
-
     .file-input { display: none; }
-
-    .photo-label {
-      font-size: 12px; color: rgba(255,255,255,0.35);
-      text-align: center; margin-bottom: 8px;
-    }
+    .photo-label { font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; margin-bottom: 8px; }
 
     /* =============================================
-       버튼
+       공통 버튼
     ============================================= */
     .btn {
       width: 100%; padding: 15px; border-radius: 50px;
@@ -112,7 +137,7 @@
     .btn.ghost { background: transparent; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); font-size: 14px; }
 
     /* =============================================
-       확인 단계 썸네일 3개
+       확인 단계 썸네일
     ============================================= */
     .confirm-row {
       display: flex; justify-content: space-around;
@@ -137,20 +162,15 @@
       padding-bottom: 48px; cursor: pointer;
     }
     #session.active { display: flex; }
-
-    /* 배경 이미지 레이어 */
     #session-bg {
       position: absolute; inset: 0;
       background-size: cover; background-position: center;
       transition: opacity 1.5s ease; opacity: 0;
     }
-
-    /* 배경 색상 레이어 (사진 없을 때) */
     #session-color {
       position: absolute; inset: 0;
       transition: background-color 1.5s ease;
     }
-
     #session-hint {
       position: relative; z-index: 10;
       font-size: 12px; color: rgba(255,255,255,0.2); letter-spacing: 0.5px;
@@ -162,15 +182,42 @@
 
   <div class="card" id="card">
 
-    <!-- STEP 1: 환영 -->
-    <div class="step active" id="step-1">
-      <div class="title">오신 걸<br>언제나 환영합니다</div>
-      <div class="subtitle">사진을 설정하고<br>호흡에 집중해보세요</div>
-      <button class="btn primary" onclick="goStep(2)">시작하기</button>
+    <!-- =============================================
+         [메인 화면] 호흡법 선택
+         - 앱 처음 진입 시 보이는 화면
+         - 호흡법 선택 → 사진 설정 → 명상 시작
+    ============================================= -->
+    <div class="screen active" id="screen-main">
+      <div class="title">명상</div>
+      <div class="subtitle">호흡법을 선택해주세요</div>
+
+      <!-- 호흡법 1: 3-4-4-4 -->
+      <!-- onclick: selectMethod('3444') 로 호흡법 선택 -->
+      <div class="method-card" onclick="selectMethod('3444')">
+        <div class="method-name">3-4-4-4 호흡법</div>
+        <div class="method-numbers">들이쉬기 3 · 멈추기 4 · 내쉬기 4 · 멈추기 4</div>
+        <div class="method-desc">긴장 완화와 집중력 향상에 효과적인 호흡법이에요</div>
+      </div>
+
+      <!-- 호흡법 2: 4-4-4-4 박스 호흡 -->
+      <div class="method-card" onclick="selectMethod('4444')">
+        <div class="method-name">4-4-4-4 박스 호흡</div>
+        <div class="method-numbers">들이쉬기 4 · 멈추기 4 · 내쉬기 4 · 멈추기 4</div>
+        <div class="method-desc">군인과 운동선수들이 사용하는 안정화 호흡법이에요</div>
+      </div>
+
+      <!-- 호흡법 3: 4-7-8 -->
+      <div class="method-card" onclick="selectMethod('478')">
+        <div class="method-name">4-7-8 호흡법</div>
+        <div class="method-numbers">들이쉬기 4 · 멈추기 7 · 내쉬기 8</div>
+        <div class="method-desc">수면과 불안 완화에 효과적인 앤드루 와일 박사의 호흡법이에요</div>
+      </div>
     </div>
 
-    <!-- STEP 2: 들이쉬기 사진 -->
-    <div class="step" id="step-2">
+    <!-- =============================================
+         [사진 설정] 들이쉬기 사진
+    ============================================= -->
+    <div class="screen" id="screen-inhale">
       <div class="title">숨을 들이쉴 때<br>보여줄 사진을 골라주세요</div>
       <div class="photo-upload">
         <div class="photo-label">들이쉬기 사진</div>
@@ -182,29 +229,16 @@
         </div>
         <input class="file-input" type="file" id="inhale-file" accept="image/*" onchange="handlePhoto('inhale', this)">
       </div>
-      <button class="btn primary" onclick="goStep(3)">다음</button>
-      <button class="btn ghost" onclick="goStep(3)" style="margin-top:8px;">사진 없이 색상으로</button>
+      <button class="btn primary" onclick="goScreen('screen-hold')">다음</button>
+      <button class="btn ghost" onclick="goScreen('screen-hold')" style="margin-top:8px;">사진 없이 색상으로</button>
     </div>
 
-    <!-- STEP 3: 내쉬기 사진 -->
-    <div class="step" id="step-3">
-      <div class="title">숨을 내쉴 때<br>보여줄 사진을 골라주세요</div>
-      <div class="photo-upload">
-        <div class="photo-label">내쉬기 사진</div>
-        <div class="photo-box" onclick="triggerUpload('exhale')">
-          <img id="exhale-img" src="" style="display:none;">
-          <div class="photo-icon" id="exhale-icon">🖼</div>
-          <div class="photo-text" id="exhale-text">탭해서 사진 선택</div>
-          <div class="photo-overlay">사진 바꾸기</div>
-        </div>
-        <input class="file-input" type="file" id="exhale-file" accept="image/*" onchange="handlePhoto('exhale', this)">
-      </div>
-      <button class="btn primary" onclick="goStep(4)">다음</button>
-      <button class="btn ghost" onclick="goStep(4)" style="margin-top:8px;">사진 없이 색상으로</button>
-    </div>
-
-    <!-- STEP 4: 멈추기 사진 -->
-    <div class="step" id="step-4">
+    <!-- =============================================
+         [사진 설정] 멈추기 사진
+         - 3444/4444는 멈추기가 2번이지만
+           사진은 같은 사진 사용
+    ============================================= -->
+    <div class="screen" id="screen-hold">
       <div class="title">잠시 멈출 때<br>보여줄 사진을 골라주세요</div>
       <div class="photo-upload">
         <div class="photo-label">멈추기 사진</div>
@@ -216,13 +250,36 @@
         </div>
         <input class="file-input" type="file" id="hold-file" accept="image/*" onchange="handlePhoto('hold', this)">
       </div>
-      <button class="btn primary" onclick="goStep(5)">다음</button>
-      <button class="btn ghost" onclick="goStep(5)" style="margin-top:8px;">사진 없이 색상으로</button>
+      <button class="btn primary" onclick="goScreen('screen-exhale')">다음</button>
+      <button class="btn ghost" onclick="goScreen('screen-exhale')" style="margin-top:8px;">사진 없이 색상으로</button>
     </div>
 
-    <!-- STEP 5: 확인 & 시작 -->
-    <div class="step" id="step-5">
+    <!-- =============================================
+         [사진 설정] 내쉬기 사진
+    ============================================= -->
+    <div class="screen" id="screen-exhale">
+      <div class="title">숨을 내쉴 때<br>보여줄 사진을 골라주세요</div>
+      <div class="photo-upload">
+        <div class="photo-label">내쉬기 사진</div>
+        <div class="photo-box" onclick="triggerUpload('exhale')">
+          <img id="exhale-img" src="" style="display:none;">
+          <div class="photo-icon" id="exhale-icon">🖼</div>
+          <div class="photo-text" id="exhale-text">탭해서 사진 선택</div>
+          <div class="photo-overlay">사진 바꾸기</div>
+        </div>
+        <input class="file-input" type="file" id="exhale-file" accept="image/*" onchange="handlePhoto('exhale', this)">
+      </div>
+      <button class="btn primary" onclick="goScreen('screen-confirm')">다음</button>
+      <button class="btn ghost" onclick="goScreen('screen-confirm')" style="margin-top:8px;">사진 없이 색상으로</button>
+    </div>
+
+    <!-- =============================================
+         [확인 & 시작]
+    ============================================= -->
+    <div class="screen" id="screen-confirm">
       <div class="title">준비가 되셨나요?</div>
+      <!-- 선택한 호흡법 이름 표시 -->
+      <div class="subtitle" id="confirm-method-name"></div>
       <div class="confirm-row">
         <div class="confirm-item">
           <div class="confirm-thumb" id="c-inhale"><span style="font-size:20px;color:rgba(255,255,255,0.2)">🖼</span></div>
@@ -238,12 +295,14 @@
         </div>
       </div>
       <button class="btn primary" onclick="startSession()">명상 시작</button>
-      <button class="btn ghost" onclick="goStep(2)" style="margin-top:10px;">다시 설정하기</button>
+      <button class="btn ghost" onclick="goScreen('screen-main')" style="margin-top:10px;">처음으로</button>
     </div>
 
   </div>
 
-  <!-- 명상 세션 화면 — 텍스트 없음, 사진/색상 풀스크린 -->
+  <!-- =============================================
+       명상 세션 화면 — 풀스크린, 탭하면 종료
+  ============================================= -->
   <div id="session" onclick="stopSession()">
     <div id="session-color"></div>
     <div id="session-bg"></div>
@@ -253,38 +312,110 @@
 </div>
 <script>
   // =============================================
-  // [수정 포인트 1] 호흡 타이밍 (밀리초, 1000 = 1초)
-  // 4-7-8 호흡법: 들이쉬기 4초 / 멈추기 7초 / 내쉬기 8초
+  // [수정 포인트 1] 호흡법 타이밍 정의
+  // 각 호흡법의 단계별 시간 (밀리초, 1000 = 1초)
+  //
+  // 단계 순서:
+  // - 3단계: inhale → hold → exhale
+  // - 4단계: inhale → hold → exhale → hold2 (멈추기 2번)
   // =============================================
-  const TIMING = {
-    inhale: 4000,  // 들이쉬기 4초
-    hold:   7000,  // 멈추기 7초
-    exhale: 8000,  // 내쉬기 8초
+  const METHODS = {
+    '3444': {
+      name: '3-4-4-4 호흡법',
+      steps: [
+        { phase: 'inhale', duration: 3000 },   // 들이쉬기 3초
+        { phase: 'hold',   duration: 4000 },   // 멈추기 4초
+        { phase: 'exhale', duration: 4000 },   // 내쉬기 4초
+        { phase: 'hold',   duration: 4000 },   // 멈추기 4초
+      ]
+    },
+    '4444': {
+      name: '4-4-4-4 박스 호흡',
+      steps: [
+        { phase: 'inhale', duration: 4000 },   // 들이쉬기 4초
+        { phase: 'hold',   duration: 4000 },   // 멈추기 4초
+        { phase: 'exhale', duration: 4000 },   // 내쉬기 4초
+        { phase: 'hold',   duration: 4000 },   // 멈추기 4초
+      ]
+    },
+    '478': {
+      name: '4-7-8 호흡법',
+      steps: [
+        { phase: 'inhale', duration: 4000 },   // 들이쉬기 4초
+        { phase: 'hold',   duration: 7000 },   // 멈추기 7초
+        { phase: 'exhale', duration: 8000 },   // 내쉬기 8초
+      ]
+    },
   };
 
   // =============================================
-  // [수정 포인트 1-1] 세션 총 시간 (밀리초)
+  // [수정 포인트 2] 세션 총 시간 (밀리초)
   // 5분 = 300000
   // =============================================
-  const SESSION_DURATION = 300000; // 5분
-
-  // 세션 종료 타이머
-  let sessionEndTimer = null;
+  const SESSION_DURATION = 300000;
 
   // =============================================
-  // [수정 포인트 2] 사진 없을 때 대체 색상
+  // [수정 포인트 3] 사진 없을 때 대체 색상
   // =============================================
   const FALLBACK = {
-    inhale: '#4A90D9',
-    hold:   '#7B68EE',
-    exhale: '#1a1a2e',
+    inhale: '#4A90D9',  // 파랑
+    hold:   '#7B68EE',  // 라벤더
+    exhale: '#1a1a2e',  // 네이비
   };
+
+  // 현재 선택된 호흡법 ID ('3444' | '4444' | '478')
+  let currentMethod = null;
 
   // 사진 데이터 (base64)
   let photos = { inhale: null, hold: null, exhale: null };
 
-  // 타이머
+  // 타이머 ID들
   let timer = null;
+  let sessionEndTimer = null;
+
+  // =============================================
+  // 호흡법 선택
+  // - 메인화면에서 카드 탭하면 호출
+  // - 선택한 호흡법 저장 후 사진 설정으로 이동
+  // =============================================
+  function selectMethod(methodId) {
+    currentMethod = methodId;
+    goScreen('screen-inhale');
+  }
+
+  // =============================================
+  // 화면 전환
+  // - screenId: 보여줄 화면의 id
+  // =============================================
+  function goScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+
+    // 확인 화면으로 갈 때 썸네일 & 호흡법 이름 업데이트
+    if (screenId === 'screen-confirm') updateConfirm();
+  }
+
+  // =============================================
+  // 확인 화면 업데이트
+  // - 선택한 사진 또는 대체 색상 표시
+  // =============================================
+  function updateConfirm() {
+    // 호흡법 이름 표시
+    if (currentMethod) {
+      document.getElementById('confirm-method-name').textContent = METHODS[currentMethod].name;
+    }
+
+    // 사진 썸네일 업데이트
+    ['inhale', 'hold', 'exhale'].forEach(phase => {
+      const thumb = document.getElementById('c-' + phase);
+      if (photos[phase]) {
+        thumb.innerHTML = `<img src="${photos[phase]}">`;
+      } else {
+        thumb.innerHTML = '';
+        thumb.style.backgroundColor = FALLBACK[phase];
+      }
+    });
+  }
 
   // =============================================
   // 파일 선택창 열기
@@ -302,7 +433,6 @@
     const reader = new FileReader();
     reader.onload = (e) => {
       photos[phase] = e.target.result;
-      // 미리보기 업데이트
       const img = document.getElementById(phase + '-img');
       img.src = e.target.result;
       img.style.display = 'block';
@@ -313,25 +443,26 @@
   }
 
   // =============================================
-  // 단계 이동
+  // 호흡 사이클 실행
+  // - METHODS[currentMethod].steps 배열을 순서대로 실행
+  // - 마지막 단계 끝나면 처음부터 반복
   // =============================================
-  function goStep(n) {
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step-' + n).classList.add('active');
-    if (n === 5) updateConfirm();
-  }
+  function runCycle() {
+    const steps = METHODS[currentMethod].steps;
+    let stepIndex = 0;
 
-  // 확인 단계 썸네일 업데이트
-  function updateConfirm() {
-    ['inhale', 'hold', 'exhale'].forEach(phase => {
-      const thumb = document.getElementById('c-' + phase);
-      if (photos[phase]) {
-        thumb.innerHTML = `<img src="${photos[phase]}">`;
-      } else {
-        thumb.innerHTML = '';
-        thumb.style.backgroundColor = FALLBACK[phase];
-      }
-    });
+    function runStep() {
+      const step = steps[stepIndex];
+      showPhase(step.phase);
+      playTone(step.phase);
+
+      timer = setTimeout(() => {
+        stepIndex = (stepIndex + 1) % steps.length; // 다음 단계 (마지막이면 처음으로)
+        runStep();
+      }, step.duration);
+    }
+
+    runStep();
   }
 
   // =============================================
@@ -351,33 +482,18 @@
   }
 
   // =============================================
-  // 호흡 사이클 — 들이쉬기 → 멈추기 → 내쉬기 → 반복
-  // =============================================
-  function runCycle() {
-    showPhase('inhale');
-    playTone('inhale');
-    timer = setTimeout(() => {
-      showPhase('hold');
-      playTone('hold');
-      timer = setTimeout(() => {
-        showPhase('exhale');
-        playTone('exhale');
-        timer = setTimeout(runCycle, TIMING.exhale);
-      }, TIMING.hold);
-    }, TIMING.inhale);
-  }
-
-  // =============================================
-  // 세션 시작 / 종료
+  // 세션 시작
   // =============================================
   function startSession() {
     document.getElementById('card').style.display = 'none';
     document.getElementById('session').classList.add('active');
     runCycle();
-    // 5분 후 자동 종료
     sessionEndTimer = setTimeout(stopSession, SESSION_DURATION);
   }
 
+  // =============================================
+  // 세션 종료 (탭하면 호출 또는 5분 후 자동)
+  // =============================================
   function stopSession() {
     clearTimeout(timer);
     clearTimeout(sessionEndTimer);
@@ -385,11 +501,11 @@
     document.getElementById('card').style.display = 'flex';
     document.getElementById('session-bg').style.backgroundImage = '';
     document.getElementById('session-color').style.backgroundColor = '';
-    goStep(5);
+    goScreen('screen-confirm');
   }
 
   // =============================================
-  // [수정 포인트 3] 소리 — 사인파 톤
+  // [수정 포인트 4] 소리 — 사인파 톤
   // 끄려면 함수 내용을 비워두세요
   // =============================================
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
